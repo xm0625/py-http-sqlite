@@ -24,6 +24,17 @@ class ExecuteSqlResultMethod(object):
     rowcount = "rowcount"
 
 
+def byteify(input):
+    if isinstance(input, dict):
+        return {byteify(key): byteify(value) for key, value in input.iteritems()}
+    elif isinstance(input, list):
+        return [byteify(element) for element in input]
+    elif isinstance(input, unicode):
+        return input.encode('utf-8')
+    else:
+        return input
+
+
 def execute_batch(execute_list, result_method):
     task_obj = {
         "execute_list": execute_list,
@@ -32,7 +43,8 @@ def execute_batch(execute_list, result_method):
     req = urllib2.Request(_url, urllib.urlencode({"task_obj": json.dumps(task_obj, ensure_ascii=False)}))
     response = urllib2.urlopen(req)
     content = response.read()
-    return content
+    content_obj = byteify(json.loads(content))
+    return content_obj["result"]
 
 
 def execute_sql(method, sql, param, result_method):
